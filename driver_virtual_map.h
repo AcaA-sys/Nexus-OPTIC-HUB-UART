@@ -1,9 +1,10 @@
+
 /**
   ******************************************************************************
   * @file    driver_virtual_map.h
-  * @brief   Аппаратная карта CAN ID и пинов под стандарт N-Bus (v1.3)
+  * @brief   Аппаратная карта CAN ID, пинов и пневмо-контуров стандарта N-Bus (v1.3)
   * @part    STM32G474RET6 (LQFP64) / Репозиторий: Nexus-OPTIC-HUB-UART
-  * @note    Защищено сквозными контурами безопасности и термокомпенсации.
+  * @note    Синхронизировано со спецификацией датчиков XGZP6847 мастера H723.
   ******************************************************************************
   */
 
@@ -21,95 +22,83 @@
 
 #define CAN_ID_DRIVE_X_CMD         0x201  // Уставка координаты/скорости оси X
 #define CAN_ID_DRIVE_Y_CMD         0x202  // Уставка координаты/скорости оси Y
-#define CAN_ID_DRIVE_Z1_CMD        0x203  // Целевая высота вертикального сопла Z1
-#define CAN_ID_DRIVE_Z2_CMD        0x204  // Целевая высота вертикального сопла Z2
-#define CAN_ID_DRIVE_Z3_CMD        0x205  // Целевая высота вертикального сопла Z3
-#define CAN_ID_DRIVE_Z4_CMD        0x206  // Целевая высота вертикального сопла Z4
+#define CAN_ID_DRIVE_Z1_CMD        0x203  // Целевая высота сопла Z1 (Поддержка до Z8)
+#define CAN_ID_DRIVE_Z2_CMD        0x204  // Целевая высота сопла Z2
+#define CAN_ID_DRIVE_Z3_CMD        0x205  // Целевая высота сопла Z3
+#define CAN_ID_DRIVE_Z4_CMD        0x206  // Целевая высота сопла Z4
 
 #define CAN_ID_DRIVE_X_TELEMETRY   0x281  // Телеметрия Closed-Loop оси X
 #define CAN_ID_DRIVE_Y_TELEMETRY   0x282  // Телеметрия Closed-Loop оси Y
-#define CAN_ID_DRIVE_Z1_TELEMETRY  0x283  // Код инкрементального энкодера A/B/Z оси Z1
-#define CAN_ID_DRIVE_Z2_TELEMETRY  0x284  // Код инкрементального энкодера A/B/Z оси Z2
-#define CAN_ID_DRIVE_Z3_TELEMETRY  0x285  // Код инкрементального энкодера A/B/Z оси Z3
-#define CAN_ID_DRIVE_Z4_TELEMETRY  0x286  // Код инкрементального энкодера A/B/Z оси Z4
+#define CAN_ID_DRIVE_Z1_TELEMETRY  0x283  // Код инкрементального энкодера осей Z1-Z4
+#define CAN_ID_DRIVE_Z2_TELEMETRY  0x284  
+#define CAN_ID_DRIVE_Z3_TELEMETRY  0x285  
+#define CAN_ID_DRIVE_Z4_TELEMETRY  0x286  
 
-#define CAN_ID_TOWER_V_AXIS        0x310  // Групповой макрос осей вращения R1/R2
-#define CAN_ID_TOWER_STATUS        0x311  // Локальный АЦП-вакуум присосок сопел Vac_S1-4
-#define CAN_ID_ENV_DATA            0x410  // Температура SHT35 + Опорные давления P1/P2 мастера
-#define CAN_ID_SERVICE_LOG         0x720  // Чтение Чёрного Ящика (W25Q128) при простое ЧПУ
-
-/* ========================================================================== */
-/* 2. ДОМЕН СЕТЕВОГО ОБМЕНА И ТАКТИРОВАНИЯ (FDCAN1 / ИК-МОСТ)                 */
-/* ========================================================================== */
-#define HSE_CRYSTAL_FREQ_MHZ       24     // Внешний прецизионный кварц HSE
-#define FDCAN_PERIPH_CLK_MHZ       80     // Тактовая частота шины CAN после PLL
-
-#define IR_FDCAN_RX_PORT           GPIOA
-#define IR_FDCAN_RX_PIN            GPIO_PIN_11 // Ножка 45: FDCAN1_RX (AF9)
-#define IR_FDCAN_TX_PORT           GPIOA
-#define IR_FDCAN_TX_PIN            GPIO_PIN_12 // Ножка 46: FDCAN1_TX (AF9)
+#define CAN_ID_TOWER_V_AXIS        0x310  // Нисходящий групповой макрос осей R1/R2 (CAN FD2)
+#define CAN_ID_TOWER_STATUS        0x311  // Локальный АЦП-вакуум присосок сопел (до 8 штук)
+#define CAN_ID_ENV_DATA            0x410  // Температура SHT35 + Опорные давления P1/P2 с мастера
+#define CAN_ID_SERVICE_LOG         0x720  // Выгрузка Чёрного Ящика (W25Q128) при простое ЧПУ
 
 /* ========================================================================== */
-/* 3. ДОМЕН ИЗМЕРИТЕЛЬНЫХ ДАТЧИКОВ ЛЕТАЮЩЕЙ БАШНИ ГОЛОВКИ                     */
+/* 2. ДОМЕНЫ СЕТЕВОГО ОБМЕНА И РАЗДЕЛЬНЫХ СКОРОСТЕЙ (N-BUS ТАЙМИНГИ)          */
 /* ========================================================================== */
-// Лазерный триангуляционный датчик Panasonic HG-C1030
+#define HSE_CRYSTAL_FREQ_MHZ       24     // Внешний прецизионный кварц HSE хаба
+#define CAN_PERIPH_CLK_MHZ         80     // Выровненная тактовая частота шин CAN после PLL
+
+// МЕДНЫЙ ДОМЕН СТАНИНЫ (CAN FD1) - БРОНЕБОЙНЫЕ 4 МБИТ/С
+#define COPPER_CAN_RX_PIN          GPIO_PIN_11 // PA11 (AF9)
+#define COPPER_CAN_TX_PIN          GPIO_PIN_12 // PA12 (AF9)
+
+// ОПТИЧЕСКИЙ ДОМЕН БАШНИ (CAN FD2 / ИК-ЛУЧ) - РАЗГОН ДО 5 МБИТ/С
+#define OPTIC_CAN_RX_PIN           GPIO_PIN_8  // PB8  (AF9)
+#define OPTIC_CAN_TX_PIN           GPIO_PIN_9  // PB9  (AF9)
+
+/* ========================================================================== */
+/* 3. АППАРАТНАЯ МАТРИЦА ДАТЧИКОВ ДАВЛЕНИЯ МАСТЕР-ПЛАТЫ H723 (РЕЗЕРВ ДЛЯ ТЗ)  */
+/* ========================================================================== */
+#define VACUUM1_PIN                GPIO_PIN_2  // PA2 (ADC1_IN14) / Датчик P1 давления 0.4 Бар
+#define VACUUM2_PIN                GPIO_PIN_3  // PA3 (ADC1_IN15) / Датчик P2 вакуума -1 Бар
+#define MASTER_ADC_DIVIDER_RATIO   "10k/20k"   // Резистивное согласование уровней 5V -> 3.3V
+
+/* ========================================================================== */
+/* 4. ДОМЕН ИЗМЕРИТЕЛЬНЫХ ДАТЧИКОВ ЛЕТАЮЩЕЙ БАШНИ ГОЛОВКИ                     */
+/* ========================================================================== */
+// Лазер Panasonic HG-C1030
 #define HG_ADC_PORT                GPIOB
-#define HG_ADC_PIN                 GPIO_PIN_1  // Ножка 18: ADC3_IN5 (Расстояние сканирования)
+#define HG_ADC_PIN                 GPIO_PIN_1  // Ножка 18: ADC3_IN5
 #define HG_EXT_INPUT_PORT          GPIOC
-#define HG_EXT_INPUT_PIN           GPIO_PIN_6  // Ножка 37: GPIO_Output (Zero Set / Hold)
+#define HG_EXT_INPUT_PIN           GPIO_PIN_6  // Ножка 37: GPIO_Output (Zero/Hold)
 #define HG_POWER_PORT              GPIOC
-#define HG_POWER_PIN               GPIO_PIN_15 // Ножка 3:  GPIO_Output (ON/OFF лазерного диода)
+#define HG_POWER_PIN               GPIO_PIN_15 // Ножка 3:  GPIO_Output (ON/OFF лазера)
 
-// Промышленный 6-осевой IMU-акселерометр ISM330DHCX (Шина SPI1)
+// Акселерометр ISM330DHCX (SPI1)
 #define IMU_SPI                    SPI1
 #define IMU_CS_PORT                GPIOC
-#define IMU_CS_PIN                 GPIO_PIN_5  // Ножка 24: GPIO_Output (Chip Select)
+#define IMU_CS_PIN                 GPIO_PIN_5  // Ножка 24: Chip Select
 #define IMU_INT1_PORT              GPIOB
-#define IMU_INT1_PIN               GPIO_PIN_0  // Ножка 26: EXTI Прерывание 1
+#define IMU_INT1_PIN               GPIO_PIN_0  // Ножка 26: EXTI0
 #define IMU_INT2_PORT              GPIOA
-#define IMU_INT2_PIN               GPIO_PIN_1  // Ножка 13: EXTI Прерывание 2 (Добавлено!)
-
-// Датчик освещенности OPT3001 (Шина I2C1)
-#define OPT_INT3_PORT              GPIOC
-#define OPT_INT3_PIN               GPIO_PIN_7  // Ножка 38: EXTI Прерывание 3
+#define IMU_INT2_PIN               GPIO_PIN_1  // Ножка 13: EXTI1
 
 // Акустический дифференциальный MEMS-микрофон IM73A135V01
 #define MIC_ADC_PORT               GPIOB
-#define MIC_DIFF_P_PIN             GPIO_PIN_14 // Ножка 47: ADC4_IN1 (Дифференциальный +)
-#define MIC_DIFF_N_PIN             GPIO_PIN_15 // Ножка 48: ADC4_IN2 (Дифференциальный -)
+#define MIC_DIFF_P_PIN             GPIO_PIN_14 // Ножка 47: ADC4_IN1
+#define MIC_DIFF_N_PIN             GPIO_PIN_15 // Ножка 48: ADC4_IN2
 
 /* ========================================================================== */
+/* 5. КОНТУР БЕЗОПАСНОСТИ, АВТОРСКОЙ СЕКРЕТКИ И ИДЕНТИФИКАЦИИ                 */
 /* ========================================================================== */
-/* 4. ЛОКАЛЬНЫЙ АСИММЕТРИЧНЫЙ КОНТУР БАШЕН (FDCAN2 + USART_RX)                */
-/* ========================================================================== */
-// Нисходящий канал управления всеми платами башен Tower-G4
-#define TOWER_FDCAN_RX_PIN         GPIO_PIN_0  // PB8: FDCAN2_RX (AF9)
-#define TOWER_FDCAN_TX_PIN         GPIO_PIN_1  // PB9: FDCAN2_TX (AF9)
+#define BOARD_ID_PORT              GPIOC
+#define BOARD_ID_BIT0_PIN          GPIO_PIN_13 // Ножка 2:  PC13 (Board ID Bit0)
+#define BOARD_ID_BIT1_PIN          GPIO_PIN_14 // Ножка 3:  PC14 (Board ID Bit1)
 
-// Восходящие выделенные линии приема телеметрии с плат башен
-#define TOWER1_UART_RX_PORT        GPIOA
-#define TOWER1_UART_RX_PIN         GPIO_PIN_10 // Ножка 43: USART1_RX (Телеметрия Башни 1-2)
+#define SECURE_KEY_ADC_PORT        GPIOA
+#define SECURE_KEY_ADC_PIN         GPIO_PIN_4  // Ножка 20: PA4 (RC-Замок контроль)
+#define SECURE_KEY_DIG_PORT        GPIOC
+#define SECURE_KEY_DIG_PIN         GPIO_PIN_0  // Ножка 9:  PC0 (Цифровой опрос)
 
-#define TOWER2_UART_RX_PORT        GPIOB
-#define TOWER2_UART_RX_PIN         GPIO_PIN_4  // Ножка 52: USART2_RX (Телеметрия Башни 3-4)
-
-// Входы аппаратного захвата импульса синхронизации осей
-#define TOWER1_SYNC_PIN            GPIO_PIN_8  // Ножка 14: PA8 (SYNC1 Input Capture)
-#define TOWER2_SYNC_PIN            GPIO_PIN_5  // Ножка 58: PB5 (SYNC2 Input Capture)
-
-
-/* ========================================================================== */
-/* 5. РЕЗЕРВНЫЕ ИНТЕРФЕЙСЫ И ЛИНЕЙКИ РАСШИРЕНИЯ                               */
-/* ========================================================================== */
-// Локальный аппаратный резерв (Ножки 30, 31, 32 LQFP64)
-#define EXPANSION_RESERVE_PORT     GPIOB
-#define EXPANSION_PB11_PIN         GPIO_PIN_11
-#define EXPANSION_PB12_PIN         GPIO_PIN_12
-#define EXPANSION_PB13_PIN         GPIO_PIN_13
-
-// Свободный аналогово-цифровой резерв общего назначения (Test Points)
-#define SPARE_PA0_PIN              GPIO_PIN_0  // Ножка 12: PA0
-#define SPARE_PA1_PIN              GPIO_PIN_1  // Ножка 13: PA1
+#define DIAG_SYNC_OUT_PORT         GPIOB
+#define DIAG_SYNC_OUT_PIN          GPIO_PIN_2  // Ножка 26: PB2 (Диагностический Выход луча)
 
 #endif /* DRIVER_VIRTUAL_MAP_H */
 
