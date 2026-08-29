@@ -79,22 +79,24 @@
 #define MIC_DIFF_N_PIN             GPIO_PIN_15 // Ножка 48: ADC4_IN2 (Дифференциальный -)
 
 /* ========================================================================== */
-/* 4. КОНТУР БЕЗОПАСНОСТИ, АВТОРСКОЙ СЕКРЕТКИ И ИДЕНТИФИКАЦИИ                 */
 /* ========================================================================== */
-// Аппаратный жесткий Board ID (Постоянная подтяжка 10 кОм к +3.3В Цифра)
-#define BOARD_ID_PORT              GPIOC
-#define BOARD_ID_BIT0_PIN          GPIO_PIN_13 // Ножка 2:  BOARD_ID_BIT0
-#define BOARD_ID_BIT1_PIN          GPIO_PIN_14 // Ножка 3:  BOARD_ID_BIT1
+/* 4. ЛОКАЛЬНЫЙ АСИММЕТРИЧНЫЙ КОНТУР БАШЕН (FDCAN2 + USART_RX)                */
+/* ========================================================================== */
+// Нисходящий канал управления всеми платами башен Tower-G4
+#define TOWER_FDCAN_RX_PIN         GPIO_PIN_0  // PB8: FDCAN2_RX (AF9)
+#define TOWER_FDCAN_TX_PIN         GPIO_PIN_1  // PB9: FDCAN2_TX (AF9)
 
-// Аппаратная секретка загрузчика (Security Boot-Key RC-замок Тау = 1 сек)
-#define SECURE_KEY_ADC_PORT        GPIOA
-#define SECURE_KEY_ADC_PIN         GPIO_PIN_4  // Ножка 20: PA4 (Аналоговый контроль АЦП)
-#define SECURE_KEY_DIG_PORT        GPIOC
-#define SECURE_KEY_DIG_PIN         GPIO_PIN_0  // Ножка 9:  PC0 (Цифровой опрос при старте)
+// Восходящие выделенные линии приема телеметрии с плат башен
+#define TOWER1_UART_RX_PORT        GPIOA
+#define TOWER1_UART_RX_PIN         GPIO_PIN_10 // Ножка 43: USART1_RX (Телеметрия Башни 1-2)
 
-// Выделенный диагностический выход луча
-#define DIAG_SYNC_OUT_PORT         GPIOB
-#define DIAG_SYNC_OUT_PIN          GPIO_PIN_2  // Ножка 26: PB2 (Диагностический SYNC)
+#define TOWER2_UART_RX_PORT        GPIOB
+#define TOWER2_UART_RX_PIN         GPIO_PIN_4  // Ножка 52: USART2_RX (Телеметрия Башни 3-4)
+
+// Входы аппаратного захвата импульса синхронизации осей
+#define TOWER1_SYNC_PIN            GPIO_PIN_8  // Ножка 14: PA8 (SYNC1 Input Capture)
+#define TOWER2_SYNC_PIN            GPIO_PIN_5  // Ножка 58: PB5 (SYNC2 Input Capture)
+
 
 /* ========================================================================== */
 /* 5. РЕЗЕРВНЫЕ ИНТЕРФЕЙСЫ И ЛИНЕЙКИ РАСШИРЕНИЯ                               */
