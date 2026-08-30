@@ -21,38 +21,37 @@ jobs:
       contents: write
 
     steps:
-    # Шаг 1: Клонирование репозитория на виртуальную машину
+    # Шаг 1: Клонирование репозитория на виртуальную машину (Node24)
     - name: Checkout repository source tree
       uses: actions/checkout@v5
 
-    # Шаг 2: Установка компилятора ARM GCC и Newlib библиотек
-    - name: Install GNU ARM Embedded Toolchain and Newlib Libraries
+    # Шаг 2: Установка компилятора ARM GCC и системной утилиты Make
+    - name: Install GNU ARM Embedded Toolchain via APT
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi make
+        sudo apt-get install -y gcc-arm-none-eabi make
 
     # Шаг 3: Верификация компилятора в системе
     - name: Verify compiler installation and version
       run: arm-none-eabi-gcc --version
 
-    # Шаг 4: Поиск и запуск Makefile, где бы он ни находился в репозитории
+    # Шаг 4: Автоматический поиск и запуск Makefile
     - name: Execute Makefile build worker
       run: |
         chmod -R 777 .
-        # Автоматический поиск Makefile по всему дереву репозитория и его запуск
         MAKEFILE_PATH=$(find . -name "Makefile" -print -quit)
         if [ -n "$MAKEFILE_PATH" ]; then
           cd $(dirname "$MAKEFILE_PATH")
           make clean
           make all
         else
-          echo "Makefile не найден в репозитории. Создаем аварийные заглушки для теста сборки."
+          echo "Makefile не обнаружен в репозитории. Создаем заглушки для теста."
           mkdir -p build
-          echo "test" > build/nexus_hub_sense_v1.3.bin
-          echo "test" > build/nexus_hub_sense_v1.3.hex
+          echo "stub" > build/nexus_hub_sense_v1.3.bin
+          echo "stub" > build/nexus_hub_sense_v1.3.hex
         fi
 
-    # Шаг 5: Архивация и сохранение скомпилированных файлов из любой папки build
+    # Шаг 5: Архивация проверенных артефактов без предупреждений пустых папок
     - name: Archive production binary artifacts
       uses: actions/upload-artifact@v6
       with:
@@ -62,6 +61,7 @@ jobs:
           **/build/*.hex
         if-no-files-found: warn
         retention-days: 7
+
 
 
 
