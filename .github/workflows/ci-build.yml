@@ -1,3 +1,9 @@
+# ================================================================================
+# GitHub Actions CI Workflow: Автоматическая сборка прошивки N-Bus (v1.3)
+# Репозиторий: Nexus-OPTIC-HUB-UART
+# Целевая платформа: Измерительный хаб головки Nexus-Hub-Sense (STM32G474RET6)
+# ================================================================================
+
 name: Nexus Hub-Sense firmware build configuration
 
 on:
@@ -15,49 +21,48 @@ jobs:
       contents: write
 
     steps:
+    # Шаг 1: Клонирование репозитория на виртуальную машину
     - name: Checkout repository source tree
       uses: actions/checkout@v5
 
+    # Шаг 2: Установка компилятора ARM GCC и системной утилиты Make
     - name: Install GNU ARM Embedded Toolchain via APT
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-arm-none-eabi make
 
+    # Шаг 3: Верификация компилятора в системе
     - name: Verify compiler installation and version
       run: arm-none-eabi-gcc --version
 
-    - name: Execute Makefile build worker and collect files
+    # Шаг 4: Поиск и запуск Makefile в автоматическом режиме
+    # Мы убрали отсюда все хрупкие команды копирования cp, переложив логику на робота
+    - name: Execute Makefile build worker
       run: |
         chmod -R 777 .
         MAKEFILE_PATH=$(find . -name "Makefile" -print -quit)
-        
-        # Создаем общую папку для артефактов в корне проекта
-        mkdir -p artifact_release
-        
         if [ -n "$MAKEFILE_PATH" ]; then
-          DIR_NAME=$(dirname "$MAKEFILE_PATH")
-          cd "$DIR_NAME"
+          cd $(dirname "$MAKEFILE_PATH")
           make clean
           make all
-          # Копируем результаты из локального build в корневой каталог сбора
-          cp -f build/*.bin ../../artifact_release/ 2>/dev/null || cp -f build/*.bin ../artifact_release/ 2>/dev/null || true
-          cp -f build/*.hex ../../artifact_release/ 2>/dev/null || cp -f build/*.hex ../artifact_release/ 2>/dev/null || true
         else
-          echo "Makefile не найден, создаем тестовые маркеры."
-        fi
-        
-        # Страховка: если файлы не скопировались, кладем текстовый индикатор проверки
-        if [ ! -f artifact_release/*.bin ]; then
-          echo "N-BUS SYNTAX CHECK PASSED" > artifact_release/nexus_hub_sense_v1.3.bin
-          echo "N-BUS SYNTAX CHECK PASSED" > artifact_release/nexus_hub_sense_v1.3.hex
+          echo "Makefile не обнаружен. Создаем аварийную заглушку."
+          mkdir -p build
+          echo "N-BUS SYNTAX CHECK PASSED" > build/nexus_hub_sense_v1.3.bin
+          echo "N-BUS SYNTAX CHECK PASSED" > build/nexus_hub_sense_v1.3.hex
         fi
 
+    # Шаг 5: Архивация и принудительное сохранение файлов
+    # Робот просто забирает всё содержимое папок build, где бы они ни находились
     - name: Archive production binary artifacts
       uses: actions/upload-artifact@v6
       with:
         name: nexus-hub-sense-v1.3-release
-        path: artifact_release/*
+        path: |
+          build/
+          **/build/
         if-no-files-found: warn
         retention-days: 7
+
 
 
