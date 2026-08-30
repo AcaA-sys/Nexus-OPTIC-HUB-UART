@@ -6,7 +6,6 @@
 
 name: Nexus Hub-Sense firmware build configuration
 
-# Контур триггеров: запуск сборки при push или pull-request в главную ветку
 on:
   push:
     branches: [ "main" ]
@@ -19,21 +18,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Шаг 1: Клонирование репозитория на виртуальную машину (Обновлено до v5 для Node24)
+    # Шаг 1: Клонирование репозитория на виртуальную машину
     - name: Checkout repository source tree
       uses: actions/checkout@v5
 
-    # Шаг 2: Установка ARM GCC напрямую через официальный системный репозиторий Ubuntu (APT)
-    - name: Install GNU ARM Embedded Toolchain via APT
+    # Шаг 2: Установка компилятора ARM GCC и ПОЛНОГО набора встроенных библиотек (Newlib)
+    - name: Install GNU ARM Embedded Toolchain and Newlib Libraries
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-arm-none-eabi make
+        sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi make
 
     # Шаг 3: Верификация установленного компилятора в системе
     - name: Verify compiler installation and version
       run: arm-none-eabi-gcc --version
 
-    # Шаг 4: Сборка бинарного файла через стандартную утилиту Make
+    # Шаг 4: Сборка бинарного файла через Makefile
     - name: Execute Makefile build worker
       run: |
         cd firmware/nexus-hub-sense || mkdir -p firmware/nexus-hub-sense
@@ -44,7 +43,7 @@ jobs:
           echo "Makefile еще не выложен в репозиторий. Проверка синтаксиса CI успешно пройдена!"
         fi
 
-    # Шаг 5: Архивация и сохранение файлов (Обновлено до v6 для идеальной совместимости)
+    # Шаг 5: Архивация и сохранение скомпилированных файлов (.bin и .hex) в артефакты GitHub
     - name: Archive production binary artifacts
       uses: actions/upload-artifact@v6
       with:
@@ -54,6 +53,7 @@ jobs:
           firmware/nexus-hub-sense/build/*.hex
         if-no-files-found: warn
         retention-days: 7
+
 
 
 
