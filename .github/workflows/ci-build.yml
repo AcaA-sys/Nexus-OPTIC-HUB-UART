@@ -17,25 +17,37 @@ jobs:
     name: Compiling STM32G474 Edge AI Binary
     runs-on: ubuntu-latest
 
+    # ==========================================================================
+    # ЖЕСТКИЙ БЛОК ПРАВ ДОСТУПА (РЕШАЕТ ПРОБЛЕМУ ОТСУТСТВИЯ ПРАВ НА ИЗМЕНЕНИЕ):
+    # Выдает облачному виртуальному менеджеру полные права на запись, создание 
+    # папок и генерацию контента внутри репозитория.
+    # ==========================================================================
+    permissions:
+      contents: write
+      actions: write
+      checks: write
+
     steps:
     # Шаг 1: Клонирование репозитория на виртуальную машину
     - name: Checkout repository source tree
       uses: actions/checkout@v5
 
-    # Шаг 2: Установка компилятора ARM GCC и ПОЛНОГО набора встроенных библиотек (Newlib)
+    # Шаг 2: Установка компилятора ARM GCC и Newlib библиотек
     - name: Install GNU ARM Embedded Toolchain and Newlib Libraries
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi make
 
-    # Шаг 3: Верификация установленного компилятора в системе
+    # Шаг 3: Верификация компилятора в системе
     - name: Verify compiler installation and version
       run: arm-none-eabi-gcc --version
 
     # Шаг 4: Сборка бинарного файла через Makefile
+    # Добавлен принудительный сброс маски прав (chmod) для полной автономии Linux
     - name: Execute Makefile build worker
       run: |
         cd firmware/nexus-hub-sense || mkdir -p firmware/nexus-hub-sense
+        chmod -R 777 .
         if [ -f Makefile ]; then
           make clean
           make all
@@ -43,7 +55,7 @@ jobs:
           echo "Makefile еще не выложен в репозиторий. Проверка синтаксиса CI успешно пройдена!"
         fi
 
-    # Шаг 5: Архивация и сохранение скомпилированных файлов (.bin и .hex) в артефакты GitHub
+    # Шаг 5: Сохранение скомпилированных файлов (.bin и .hex) в артефакты
     - name: Archive production binary artifacts
       uses: actions/upload-artifact@v6
       with:
@@ -53,6 +65,7 @@ jobs:
           firmware/nexus-hub-sense/build/*.hex
         if-no-files-found: warn
         retention-days: 7
+
 
 
 
