@@ -19,9 +19,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Шаг 1: Клонирование репозитория на виртуальную машину Ubuntu
+    # Шаг 1: Клонирование репозитория на виртуальную машину (Обновлено до v5 для Node24)
     - name: Checkout repository source tree
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     # Шаг 2: Установка ARM GCC напрямую через официальный системный репозиторий Ubuntu (APT)
     - name: Install GNU ARM Embedded Toolchain via APT
@@ -44,9 +44,9 @@ jobs:
           echo "Makefile еще не выложен в репозиторий. Проверка синтаксиса CI успешно пройдена!"
         fi
 
-    # Шаг 5: Архивация и сохранение скомпилированных файлов (.bin и .hex) в артефакты GitHub
+    # Шаг 5: Архивация и сохранение файлов (Обновлено до v6 для идеальной совместимости)
     - name: Archive production binary artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: nexus-hub-sense-v1.3-release
         path: |
@@ -54,6 +54,7 @@ jobs:
           firmware/nexus-hub-sense/build/*.hex
         if-no-files-found: warn
         retention-days: 7
+
 
 
 
