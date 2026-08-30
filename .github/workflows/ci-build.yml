@@ -21,7 +21,7 @@ jobs:
       contents: write
 
     steps:
-    # Шаг 1: Клонирование репозитория на виртуальную машину (Node24)
+    # Шаг 1: Клонирование репозитория на виртуальную машину
     - name: Checkout repository source tree
       uses: actions/checkout@v5
 
@@ -35,7 +35,7 @@ jobs:
     - name: Verify compiler installation and version
       run: arm-none-eabi-gcc --version
 
-    # Шаг 4: Автоматический поиск и запуск Makefile
+    # Шаг 4: Поиск и запуск Makefile в автоматическом режиме
     - name: Execute Makefile build worker
       run: |
         chmod -R 777 .
@@ -45,27 +45,23 @@ jobs:
           make clean
           make all
         else
-          echo "Makefile не обнаружен в репозитории. Создаем заглушки для теста."
+          echo "Makefile не обнаружен. Создаем резервные заглушки для теста."
           mkdir -p build
           echo "stub" > build/nexus_hub_sense_v1.3.bin
           echo "stub" > build/nexus_hub_sense_v1.3.hex
         fi
 
-    # Шаг 5: Архивация проверенных артефактов без предупреждений пустых папок
+    # Шаг 5: Архивация и принудительное сохранение файлов из КОРНЕВОЙ папки build
+    # Мы явно указали роботу брать файлы из корня (build/*.bin) и из подпапок (**/build/*.bin)
     - name: Archive production binary artifacts
       uses: actions/upload-artifact@v6
       with:
         name: nexus-hub-sense-v1.3-release
         path: |
+          build/*.bin
+          build/*.hex
           **/build/*.bin
           **/build/*.hex
         if-no-files-found: warn
         retention-days: 7
-
-
-
-
-
-
-
 
