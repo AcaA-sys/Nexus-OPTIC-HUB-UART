@@ -5,108 +5,94 @@
 # Назначение: Автогенерация полной карты пинов v1.3 для честной компиляции бинарника
 ################################################################################
 
-TARGET = nexus_hub_sense_v1.3
-OPT = -Os
-BUILD_DIR = build
+-include ../makefile.init
 
-C_SOURCES = hub_main.c
+RM := rm -rf
 
-PREFIX = arm-none-eabi-
-CC = $(PREFIX)gcc
-CP = $(PREFIX)objcopy
-SZ = $(PREFIX)size
+# All of the sources participating in the build are defined here
+-include sources.mk
+-include Drivers/STM32G4xx_HAL_Driver/Src/subdir.mk
+-include Core/Startup/subdir.mk
+-include Core/Src/subdir.mk
+-include objects.mk
 
-HEX = $(CP) -O ihex
-BIN = $(CP) -O binary -S
- 
-MCU = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
-C_DEFS = -DSTM32G474xx -DUSE_HAL_DRIVER
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(strip $(S_DEPS)),)
+-include $(S_DEPS)
+endif
+ifneq ($(strip $(S_UPPER_DEPS)),)
+-include $(S_UPPER_DEPS)
+endif
+ifneq ($(strip $(C_DEPS)),)
+-include $(C_DEPS)
+endif
+endif
 
-C_INCLUDES = -I. -IInc -Iinc -Ibuild
+-include ../makefile.defs
 
-CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -c -ffreestanding
+OPTIONAL_TOOL_DEPS := \
+$(wildcard ../makefile.defs) \
+$(wildcard ../makefile.init) \
+$(wildcard ../makefile.targets) \
 
-# Главная цель сборки
-all: $(BUILD_DIR) $(BUILD_DIR)/driver_virtual_map.h $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 
-# АВТОГЕНЕРАЦИЯ ПОЛНОЙ И ЧЕСТНОЙ КАРТЫ ПИНОВ И CAN ID СТАНДАРТА v1.3 ПРЯМО В ПАПКУ BUILD/
-$(BUILD_DIR)/driver_virtual_map.h:
-	@echo "Принудительная генерация эталонного файла driver_virtual_map.h v1.3..."
-	@echo '#ifndef DRIVER_VIRTUAL_MAP_H' > $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define DRIVER_VIRTUAL_MAP_H' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#include "main.h"' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_SYS_SYNC 0x010' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_RT_CORRECTION 0x050' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_ACCEL_DATA 0x120' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_X_CMD 0x201' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Y_CMD 0x202' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Z1_CMD 0x203' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Z2_CMD 0x204' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Z3_CMD 0x205' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Z4_CMD 0x206' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_X_TELEMETRY 0x281' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Y_TELEMETRY 0x282' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Z1_TELEMETRY 0x283' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Z2_TELEMETRY 0x284' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Z3_TELEMETRY 0x285' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_DRIVE_Z4_TELEMETRY 0x286' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_TOWER_V_AXIS 0x310' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_TOWER_STATUS 0x311' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_ENV_DATA 0x410' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define CAN_ID_SERVICE_LOG 0x720' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define BOARD_ID_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define BOARD_ID_BIT0_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define BOARD_ID_BIT1_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define SECURE_KEY_DIG_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define SECURE_KEY_DIG_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define HG_POWER_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define HG_POWER_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define HG_EXT_INPUT_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define HG_EXT_INPUT_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define DIAG_SYNC_OUT_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define DIAG_SYNC_OUT_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define TOWER1_UART_RX_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define TOWER1_UART_RX_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define TOWER2_UART_RX_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define TOWER2_UART_RX_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define SECURE_KEY_ADC_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define SECURE_KEY_ADC_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define MIC_ADC_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define MIC_DIFF_P_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define MIC_DIFF_N_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define IMU_CS_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define IMU_CS_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define IMU_INT1_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define IMU_INT1_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define IMU_INT2_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define IMU_INT2_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define OPT_INT3_PORT 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#define OPT_INT3_PIN 0' >> $(BUILD_DIR)/driver_virtual_map.h
-	@echo '#endif' >> $(BUILD_DIR)/driver_virtual_map.h
+BUILD_ARTIFACT_NAME := hub-G474-
+BUILD_ARTIFACT_EXTENSION := elf
+BUILD_ARTIFACT_PREFIX :=
+BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
-# Шаг 1: Честная компиляция hub_main.c с подтягиванием сгенерированной карты из -Ibuild
-$(BUILD_DIR)/$(TARGET).o: $(BUILD_DIR)/driver_virtual_map.h
-	@echo "Запуск честной машинной компиляции кода хаба головки..."
-	$(CC) $(C_SOURCES) $(CFLAGS) -o $(BUILD_DIR)/$(TARGET).o
-	$(SZ) $(BUILD_DIR)/$(TARGET).o
+# Add inputs and outputs from these tool invocations to the build variables 
+EXECUTABLES += \
+hub-G474-.elf \
 
-# Шаг 2: Извлечение НАСТОЯЩЕГО промышленного HEX из объектного кода
-$(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).o
-	@echo "Генерация реального HEX-файла прошивки..."
-	$(HEX) $(BUILD_DIR)/$(TARGET).o $(BUILD_DIR)/$(TARGET).hex
+MAP_FILES += \
+hub-G474-.map \
 
-# Шаг 3: Нарезка НАСТОЯЩЕГО чистого бинарника BIN для программатора
-$(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).hex
-	@echo "Генерация реального чистого BIN-файла машинных инструкций..."
-	$(BIN) $(BUILD_DIR)/$(TARGET).o $(BUILD_DIR)/$(TARGET).bin
-	@echo "Архитектурная сборка N-Bus успешно завершена!"
+SIZE_OUTPUT += \
+default.size.stdout \
 
-$(BUILD_DIR):
-	@mkdir -p $@
+OBJDUMP_LIST += \
+hub-G474-.list \
 
+
+# All Target
+all: main-build
+
+# Main-build Target
+main-build: hub-G474-.elf secondary-outputs
+
+# Tool invocations
+hub-G474-.elf hub-G474-.map: $(OBJS) $(USER_OBJS) C:\Users\KDFX\ Modes\STM32CubeIDE\workspace_1.9.0\hub-G474-\STM32G474CBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "hub-G474-.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\KDFX Modes\STM32CubeIDE\workspace_1.9.0\hub-G474-\STM32G474CBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="hub-G474-.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-size  $(EXECUTABLES)
+	@echo 'Finished building: $@'
+	@echo ' '
+
+hub-G474-.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "hub-G474-.list"
+	@echo 'Finished building: $@'
+	@echo ' '
+
+# Other Targets
 clean:
-	@rm -fR $(BUILD_DIR)
-  
-.PHONY: all clean
+	-$(RM) default.size.stdout hub-G474-.elf hub-G474-.list hub-G474-.map
+	-@echo ' '
+
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+
+fail-specified-linker-script-missing:
+	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
+	@exit 2
+
+warn-no-linker-script-specified:
+	@echo 'Warning: No linker script specified. Check the linker settings in the build configuration.'
+
+.PHONY: all clean dependents main-build fail-specified-linker-script-missing warn-no-linker-script-specified
+
+-include ../makefile.targets
 
 
